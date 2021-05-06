@@ -4,15 +4,25 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.novoda:bintray-release:0.9'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.1'
     }
 }
 
+
+
 plugins {
     id 'java'
+    id 'java-gradle-plugin'
+
+
 }
 
-apply plugin: 'com.novoda.bintray-release'
+apply plugin: 'com.jfrog.bintray'
+//
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+
+
 
 group 'ir.doorbash'
 version '1.2.3'
@@ -25,20 +35,51 @@ repositories {
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
-    implementation 'org.java-websocket:Java-WebSocket:1.3.9'
-    implementation 'org.msgpack:jackson-dataformat-msgpack:0.8.16'
+    api 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
+    api 'org.java-websocket:Java-WebSocket:1.3.9'
+    api 'org.msgpack:jackson-dataformat-msgpack:0.8.16'
 }
 
-publish {
-    def groupProjectID = 'ir.doorbash'
-    def artifactProjectID = 'colyseus-java'
-    def publishVersionID = '1.2.3'
-    userOrg = 'doorbash'
-    repoName = 'ColyseusJavaClient'
-    groupId = groupProjectID
-    artifactId = artifactProjectID
-    publishVersion = publishVersionID
-    desc = 'Colyseus Client for Java'
-    website = 'https://github.com/doorbash/colyseus-java'
+
+tasks.register("sourcesJar", Jar) {
+    from sourceSets.main.allJava
+    classifier "sources"
+}
+
+tasks.register("javadocJar", Jar) {
+    from javadoc
+    javadoc.options.addStringOption('Xdoclint:none', '-quiet')
+    classifier "javadoc"
+}
+
+publishing {
+    publications {
+        MyPublication(MavenPublication) {
+            from  components.java
+            artifact sourcesJar
+            artifact javadocJar
+            groupId   'org.bitbucket.icebergteam'
+            artifactId  =  'colyseus-java'
+            version = '1.2.6'
+        }
+    }
+}
+
+bintray {
+    user = 'daimonkor'
+    key = 'd1b064febfe7884f909a06ba341deb695e3b87e8'
+    publications = ['MyPublication']
+    pkg {
+        repo = 'maven'
+        name = 'colyseus-java'
+        userOrg = 'icebergteam'
+        licenses = ['Apache-2.0']
+        vcsUrl = 'https://github.com/daimonkor/colyseus-java'
+        publicDownloadNumbers = true
+        publish = true
+        version {
+            name = '1.2.6'
+            vcsTag = '1.2.6'
+        }
+    }
 }
